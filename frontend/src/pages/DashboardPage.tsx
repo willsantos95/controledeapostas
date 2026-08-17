@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export function DashboardPage() {
@@ -17,9 +18,12 @@ export function DashboardPage() {
             Sair
           </button>
         </div>
-        <p className="mt-4 text-gray-600">
-          Área de controle de apostas em construção.
-        </p>
+        <Link
+          to="/bets"
+          className="mt-4 inline-block rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+        >
+          Ver minhas apostas
+        </Link>
       </div>
     </div>
   );

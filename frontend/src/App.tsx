@@ -4,6 +4,10 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { BetsList } from "./pages/BetsList";
+import { BetForm } from "./pages/BetForm";
+import { BetDetail } from "./pages/BetDetail";
+import { BetEdit } from "./pages/BetEdit";
 
 export default function App() {
   return (
@@ -18,6 +22,38 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bets"
+            element={
+              <ProtectedRoute>
+                <BetsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bets/new"
+            element={
+              <ProtectedRoute>
+                <BetForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bets/:id"
+            element={
+              <ProtectedRoute>
+                <BetDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bets/:id/edit"
+            element={
+              <ProtectedRoute>
+                <BetEdit />
               </ProtectedRoute>
             }
           />
