@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: apostas
-      POSTGRES_PASSWORD: apostas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apostas}
       POSTGRES_DB: apostas
     ports:
       - "5432:5432"
@@ -22,8 +22,8 @@ services:
     container_name: apostas-minio
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -49,15 +49,15 @@ services:
     environment:
       PORT: 4000
       NODE_ENV: production
-      DATABASE_URL: postgres://apostas:apostas@postgres:5432/apostas
+      DATABASE_URL: postgres://apostas:${POSTGRES_PASSWORD:-apostas}@postgres:5432/apostas
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env da raiz}
       JWT_ACCESS_EXPIRY: 15m
       JWT_REFRESH_EXPIRY: 7d
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
       S3_ENDPOINT: http://minio:9000
-      S3_ACCESS_KEY: minioadmin
-      S3_SECRET_KEY: minioadmin
-      S3_BUCKET: apostas-bucket
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-apostas-bucket}
       S3_REGION: us-east-1
     ports:
       - "4000:4000"

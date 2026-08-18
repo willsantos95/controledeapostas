@@ -123,21 +123,35 @@ Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pod
 
 ## Deploy
 
-### Opção A — Self-hosted com Docker Compose (EasyPanel ou VPS própria)
+### Opção A — EasyPanel (via Docker Compose)
 
-1. Copie `.env.example` (raiz) para `.env` e defina um `JWT_SECRET` forte (mín. 32 caracteres aleatórios) e ajuste `FRONTEND_URL`/`VITE_API_URL` para o domínio público real.
-2. Suba a stack completa (Postgres + MinIO + backend + frontend) com o profile `full`:
+Repositório: [github.com/willsantos95/controledeapostas](https://github.com/willsantos95/controledeapostas) (privado).
+
+1. No EasyPanel, crie um novo projeto do tipo **App from Docker Compose** (ou similar, "Compose" no menu de criação) e aponte para este repositório GitHub, branch `main`, arquivo `docker-compose.yml` na raiz.
+2. Defina as variáveis de ambiente do projeto no EasyPanel (elas alimentam o `docker-compose.yml` via interpolação `${VAR}`):
+   - `JWT_SECRET` — string aleatória forte, mínimo 32 caracteres (gere com `openssl rand -base64 32`)
+   - `POSTGRES_PASSWORD` — senha forte para o Postgres
+   - `S3_ACCESS_KEY` / `S3_SECRET_KEY` — credenciais do MinIO (não use `minioadmin` em produção)
+   - `S3_BUCKET` — nome do bucket (padrão `apostas-bucket`)
+   - `FRONTEND_URL` — URL pública do frontend, ex: `https://apostas.seudominio.com`
+   - `VITE_API_URL` — URL pública do backend, ex: `https://api-apostas.seudominio.com`
+3. Ao publicar, o EasyPanel deve subir os 4 serviços do compose com o profile `full` ativo (`docker compose --profile full up -d --build`) — se a UI não expuser o profile diretamente, configure o comando de start do projeto para incluir `--profile full`.
+4. No EasyPanel, associe domínios/HTTPS ao serviço `frontend` (porta interna `80`) e, se quiser expor a API em subdomínio próprio, ao serviço `backend` (porta interna `4000`). Não é necessário expor `postgres` (`5432`) nem `minio` (`9000`/`9001`) publicamente — mantenha-os só na rede interna do projeto.
+5. O backend aplica as migrations automaticamente no boot (`node dist/db/migrate.js && node dist/server.js`) e cria o bucket do MinIO se não existir.
+6. Configure backup periódico dos volumes `apostas_pgdata` (Postgres) e `apostas_miniodata` (screenshots) nas configurações de volume do EasyPanel.
+7. Health checks já configurados: `GET /health` no backend, `pg_isready` no Postgres, `mc ready` no MinIO, e `HEALTHCHECK` nos dois Dockerfiles — o EasyPanel deve refletir o status "healthy" de cada serviço automaticamente.
+
+### Opção B — Self-hosted manual com Docker Compose (VPS própria)
+
+1. `git clone` este repositório na VPS, copie `.env.example` (raiz) para `.env` e preencha as mesmas variáveis do passo 2 acima.
+2. Suba a stack completa:
 
    ```bash
    docker compose --profile full up -d --build
    ```
+3. Coloque um reverse proxy (Nginx, Traefik, Caddy) na frente de `frontend` (porta `8080` do host) e `backend` (porta `4000` do host) para TLS/HTTPS.
 
-   O backend aplica as migrations automaticamente antes de iniciar (`node dist/db/migrate.js && node dist/server.js`), e cria o bucket do MinIO no startup se não existir.
-3. Exponha `frontend` (porta 80 do container, mapeada para `8080` no host) atrás do proxy HTTPS do EasyPanel/Nginx, e `backend` (porta `4000`) na mesma rede interna — não é necessário expor a porta do backend publicamente se o proxy fizer o roteamento `/api` → backend.
-4. Configure backup periódico do volume `apostas_pgdata` (Postgres) e `apostas_miniodata` (screenshots).
-5. Health checks já configurados: `GET /health` no backend, `pg_isready` no Postgres, `mc ready` no MinIO, e `HEALTHCHECK` nos dois Dockerfiles.
-
-Em desenvolvimento local, continue usando apenas `docker-compose up -d` (sem `--profile full`) para subir só Postgres + MinIO, e rode backend/frontend via `npm run dev` como descrito acima — os serviços `backend`/`frontend` do compose só sobem quando o profile `full` é explicitamente selecionado.
+Em desenvolvimento local, continue usando apenas `docker-compose up -d` (sem `--profile full`) para subir só Postgres + MinIO, e rode backend/frontend via `npm run dev` como descrito acima — os serviços `backend`/`frontend` do compose só sobem quando o profile `full` é explicitamente selecionado. Mesmo nesse modo, um `.env` na raiz (copiado de `.env.example`) é necessário, pois o Docker Compose valida `JWT_SECRET` na interpolação do arquivo antes de aplicar o filtro de profile.
 
 ### Opção B — Cloud-ready (Vercel + Railway/Render)
 
