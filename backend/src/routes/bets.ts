@@ -315,6 +315,154 @@ router.post(
   }
 );
 
+interface CalculatorBetInput {
+  bet_id: string;
+  platform?: string;
+  stake: string;
+  initial_odds: string;
+  bet_type: string;
+  sport?: string;
+  event_description?: string;
+  bet_description?: string;
+  notes?: string;
+}
+
+async function insertBet(userId: string, input: CalculatorBetInput) {
+  const result = await pool.query(
+    `INSERT INTO bets (
+       user_id, bet_id, platform, stake, initial_odds,
+       bet_type, sport, event_description, bet_description, notes, status
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
+     RETURNING *`,
+    [
+      userId,
+      input.bet_id,
+      input.platform || null,
+      input.stake,
+      input.initial_odds,
+      input.bet_type,
+      input.sport || null,
+      input.event_description || null,
+      input.bet_description || null,
+      input.notes || null,
+    ]
+  );
+  return result.rows[0];
+}
+
+router.post("/from-calculator", async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const {
+    calculator_type,
+    calculator_data,
+    calculator_log_id,
+    platform,
+    event_description,
+    notes,
+  } = req.body ?? {};
+
+  if (!calculator_type || !calculator_data) {
+    throw new AppError("calculator_type e calculator_data são obrigatórios", 400);
+  }
+
+  const betIdPrefix = `CALC-${Date.now()}`;
+  let createdBets;
+
+  if (calculator_type === "surebet_2way") {
+    const { stake1, stake2 } = calculator_data;
+    if (!stake1 || !stake2) {
+      throw new AppError("calculator_data inválido para surebet_2way", 400);
+    }
+    createdBets = await Promise.all([
+      insertBet(userId, {
+        bet_id: `${betIdPrefix}-1`,
+        platform,
+        stake: String(stake1),
+        initial_odds: String(calculator_data.odd1 ?? calculator_data.stake1),
+        bet_type: "single",
+        event_description,
+        bet_description: "Perna 1 - Surebet",
+        notes,
+      }),
+      insertBet(userId, {
+        bet_id: `${betIdPrefix}-2`,
+        platform,
+        stake: String(stake2),
+        initial_odds: String(calculator_data.odd2 ?? calculator_data.stake2),
+        bet_type: "single",
+        event_description,
+        bet_description: "Perna 2 - Surebet",
+        notes,
+      }),
+    ]);
+  } else if (calculator_type === "duplo_green_3way") {
+    const { stake1, stakeX, stake2 } = calculator_data;
+    if (!stake1 || !stakeX || !stake2) {
+      throw new AppError("calculator_data inválido para duplo_green_3way", 400);
+    }
+    createdBets = await Promise.all([
+      insertBet(userId, {
+        bet_id: `${betIdPrefix}-1`,
+        platform,
+        stake: String(stake1),
+        initial_odds: "1",
+        bet_type: "single",
+        event_description,
+        bet_description: "Casa - Duplo Green",
+        notes,
+      }),
+      insertBet(userId, {
+        bet_id: `${betIdPrefix}-X`,
+        platform,
+        stake: String(stakeX),
+        initial_odds: "1",
+        bet_type: "single",
+        event_description,
+        bet_description: "Empate - Duplo Green",
+        notes,
+      }),
+      insertBet(userId, {
+        bet_id: `${betIdPrefix}-2`,
+        platform,
+        stake: String(stake2),
+        initial_odds: "1",
+        bet_type: "single",
+        event_description,
+        bet_description: "Fora - Duplo Green",
+        notes,
+      }),
+    ]);
+  } else if (calculator_type === "free_bet_converter") {
+    const { recommendedStake } = calculator_data;
+    if (!recommendedStake) {
+      throw new AppError("calculator_data inválido para free_bet_converter", 400);
+    }
+    createdBets = [
+      await insertBet(userId, {
+        bet_id: betIdPrefix,
+        platform,
+        stake: String(recommendedStake),
+        initial_odds: "1",
+        bet_type: "free",
+        event_description,
+        bet_description: "Aposta Grátis",
+        notes,
+      }),
+    ];
+  } else {
+    throw new AppError("calculator_type inválido", 400);
+  }
+
+  if (calculator_log_id) {
+    await pool.query(
+      `UPDATE calculator_logs SET is_saved = true, bet_id = $1 WHERE id = $2 AND user_id = $3`,
+      [createdBets[0].id, calculator_log_id, userId]
+    );
+  }
+
+  res.status(201).json(createdBets.length === 1 ? createdBets[0] : createdBets);
+});
+
 router.delete("/:betId", async (req: Request, res: Response) => {
   const userId = req.user!.id;
   const { betId } = req.params;

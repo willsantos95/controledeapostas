@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth";
 import betsRouter from "./routes/bets";
+import calculatorsRouter from "./routes/calculators";
 import { authMiddleware } from "./middleware/auth";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -23,6 +24,7 @@ export function createApp() {
 
   app.use("/auth", authRouter);
   app.use("/bets", authMiddleware, betsRouter);
+  app.use("/calculators", authMiddleware, calculatorsRouter);
 
   app.use((_req, res) => res.status(404).json({ error: "Rota não encontrada" }));
 

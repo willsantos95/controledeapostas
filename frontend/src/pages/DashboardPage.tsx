@@ -18,12 +18,32 @@ export function DashboardPage() {
             Sair
           </button>
         </div>
-        <Link
-          to="/bets"
-          className="mt-4 inline-block rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-        >
-          Ver minhas apostas
-        </Link>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            to="/bets"
+            className="inline-block rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+          >
+            Ver minhas apostas
+          </Link>
+          <Link
+            to="/calculators/surebet"
+            className="inline-block rounded bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300"
+          >
+            Calculadora Surebet
+          </Link>
+          <Link
+            to="/calculators/duplo-green"
+            className="inline-block rounded bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300"
+          >
+            Calculadora Duplo Green
+          </Link>
+          <Link
+            to="/calculators/free-bet"
+            className="inline-block rounded bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300"
+          >
+            Calculadora Aposta Grátis
+          </Link>
+        </div>
       </div>
     </div>
   );

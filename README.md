@@ -2,7 +2,7 @@
 
 Sistema pessoal de controle de apostas esportivas com calculadoras de surebet.
 
-Este repositório contém a **Fase 1 (Core & Auth)** e a **Fase 2 (CRUD de Apostas & Upload de Screenshots)** do roadmap: estrutura de monorepo, autenticação JWT completa, CRUD de apostas com upload de screenshots via MinIO/S3, e frontend com login/signup/dashboard/apostas.
+Este repositório contém a **Fase 1 (Core & Auth)**, **Fase 2 (CRUD de Apostas & Upload de Screenshots)** e **Fase 3 (Calculadoras)** do roadmap: estrutura de monorepo, autenticação JWT completa, CRUD de apostas com upload de screenshots via MinIO/S3, calculadoras de Surebet/Duplo Green/Aposta Grátis com precisão decimal, e frontend com login/signup/dashboard/apostas/calculadoras.
 
 ## Estrutura
 
@@ -54,7 +54,7 @@ cd backend
 npm test
 ```
 
-Os testes cobrem hashing de senha, validação de força de senha/email, geração/verificação de JWT, validação de payload das rotas de auth e de apostas, e o cálculo de `net_gain` com Decimal.js para os 4 cenários de resultado (won/lost/void/canceled) — tudo sem exigir banco ou MinIO reais rodando. Testes de integração completos (com banco e S3) podem ser adicionados rodando `docker-compose up -d` antes de `npm test`.
+Os testes cobrem hashing de senha, validação de força de senha/email, geração/verificação de JWT, validação de payload das rotas de auth, apostas e calculadoras, o cálculo de `net_gain` com Decimal.js para os 4 cenários de resultado (won/lost/void/canceled), e as fórmulas das 3 calculadoras (surebet, duplo green, aposta grátis) — tudo sem exigir banco ou MinIO reais rodando. Testes de integração completos (com banco e S3) podem ser adicionados rodando `docker-compose up -d` antes de `npm test`.
 
 ## Endpoints implementados
 
@@ -79,17 +79,30 @@ Os testes cobrem hashing de senha, validação de força de senha/email, geraç�
 | PUT | `/bets/:betId` | sim |
 | POST | `/bets/:betId/result` | sim |
 | DELETE | `/bets/:betId` | sim |
+| POST | `/bets/from-calculator` | sim |
 
-## Páginas do frontend (Fase 2)
+### Fase 3 — Calculadoras
+
+| Método | Rota | Auth |
+|---|---|---|
+| POST | `/calculators/surebet` | sim |
+| POST | `/calculators/duplo-green` | sim |
+| POST | `/calculators/free-bet` | sim |
+
+Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pode ser convertido em aposta(s) real(is) via `POST /bets/from-calculator`, informando `calculator_type`, `calculator_data` (o resultado retornado pela calculadora) e, opcionalmente, `calculator_log_id` para marcar o log como salvo.
+
+## Páginas do frontend
 
 - `/bets` — lista de apostas com filtros (status, esporte) e paginação
 - `/bets/new` — formulário de criação de aposta com upload de screenshots
 - `/bets/:id` — detalhe da aposta, com botão de editar (se pendente) e marcar resultado
 - `/bets/:id/edit` — edição de aposta pendente
+- `/calculators/surebet` — calculadora de surebet 2-way
+- `/calculators/duplo-green` — calculadora de duplo green 3-way
+- `/calculators/free-bet` — calculadora de aposta grátis (modo simples e com lay)
 
 ## Próximas fases
 
-- Fase 3: Calculadoras (Surebet, Duplo Green, Aposta Grátis)
 - Fase 4: Analytics & Dashboard
 - Fase 5: Polish & Deploy
 
