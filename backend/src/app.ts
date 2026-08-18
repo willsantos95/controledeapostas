@@ -1,6 +1,7 @@
 import "express-async-errors";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth";
 import betsRouter from "./routes/bets";
@@ -8,10 +9,12 @@ import calculatorsRouter from "./routes/calculators";
 import analyticsRouter from "./routes/analytics";
 import { authMiddleware } from "./middleware/auth";
 import { errorHandler } from "./middleware/errorHandler";
+import { apiLimiter } from "./middleware/rateLimit";
 
 export function createApp() {
   const app = express();
 
+  app.use(helmet());
   app.use(
     cors({
       origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -20,6 +23,7 @@ export function createApp() {
   );
   app.use(express.json());
   app.use(cookieParser());
+  app.use(apiLimiter);
 
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
 

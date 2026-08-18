@@ -2,7 +2,7 @@
 
 Sistema pessoal de controle de apostas esportivas com calculadoras de surebet.
 
-Este repositório contém a **Fase 1 (Core & Auth)**, **Fase 2 (CRUD de Apostas & Upload de Screenshots)**, **Fase 3 (Calculadoras)** e **Fase 4 (Analytics & Dashboard)** do roadmap: estrutura de monorepo, autenticação JWT completa, CRUD de apostas com upload de screenshots via MinIO/S3, calculadoras de Surebet/Duplo Green/Aposta Grátis com precisão decimal, dashboard com KPIs e gráficos, e frontend com login/signup/dashboard/apostas/calculadoras.
+Este repositório contém o roadmap completo do MVP — **Fase 1 (Core & Auth)**, **Fase 2 (CRUD de Apostas & Upload de Screenshots)**, **Fase 3 (Calculadoras)**, **Fase 4 (Analytics & Dashboard)** e **Fase 5 (Polish & Deploy)**: estrutura de monorepo, autenticação JWT completa, CRUD de apostas com upload de screenshots via MinIO/S3, calculadoras de Surebet/Duplo Green/Aposta Grátis com precisão decimal, dashboard com KPIs e gráficos, hardening de segurança (Helmet, rate limiting) e Dockerfiles de produção prontos para deploy self-hosted.
 
 ## Estrutura
 
@@ -111,8 +111,39 @@ Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pod
 - `/calculators/free-bet` — calculadora de aposta grátis (modo simples e com lay)
 - `/dashboard` — KPIs (ganho real, ROI%, win rate, total de apostas), seletor de período, filtro de esporte, gráfico de ganho acumulado, distribuição por esporte e por plataforma, e melhor/pior aposta do período
 
-## Próximas fases
+## Segurança (Fase 5)
 
-- Fase 5: Polish & Deploy
+- Todas as rotas de dados exigem JWT via `authMiddleware`; senhas com bcrypt (12 rounds); queries sempre parametrizadas (proteção contra SQL injection).
+- `helmet()` define cabeçalhos HTTP de segurança padrão em todas as respostas.
+- Rate limiting em duas camadas: `loginLimiter` (5 tentativas / 15min) no `/auth/login`, e `apiLimiter` (300 requisições / 15min por IP) em toda a API.
+- CORS restrito à origem definida em `FRONTEND_URL`, com `credentials: true` apenas para essa origem.
+- Refresh token em cookie `httpOnly` + `sameSite: strict`, nunca acessível via JavaScript no frontend.
+- React escapa strings por padrão (sem `dangerouslySetInnerHTML` em nenhuma página), o que cobre a proteção contra XSS no MVP.
+- HTTPS é responsabilidade da camada de proxy/reverse proxy em produção (EasyPanel, Nginx, Vercel, Railway) — os serviços aqui rodam em HTTP puro dentro da rede interna.
 
-Ver `SPEC-APOSTAS-INDEX.md` para o roadmap completo.
+## Deploy
+
+### Opção A — Self-hosted com Docker Compose (EasyPanel ou VPS própria)
+
+1. Copie `.env.example` (raiz) para `.env` e defina um `JWT_SECRET` forte (mín. 32 caracteres aleatórios) e ajuste `FRONTEND_URL`/`VITE_API_URL` para o domínio público real.
+2. Suba a stack completa (Postgres + MinIO + backend + frontend) com o profile `full`:
+
+   ```bash
+   docker compose --profile full up -d --build
+   ```
+
+   O backend aplica as migrations automaticamente antes de iniciar (`node dist/db/migrate.js && node dist/server.js`), e cria o bucket do MinIO no startup se não existir.
+3. Exponha `frontend` (porta 80 do container, mapeada para `8080` no host) atrás do proxy HTTPS do EasyPanel/Nginx, e `backend` (porta `4000`) na mesma rede interna — não é necessário expor a porta do backend publicamente se o proxy fizer o roteamento `/api` → backend.
+4. Configure backup periódico do volume `apostas_pgdata` (Postgres) e `apostas_miniodata` (screenshots).
+5. Health checks já configurados: `GET /health` no backend, `pg_isready` no Postgres, `mc ready` no MinIO, e `HEALTHCHECK` nos dois Dockerfiles.
+
+Em desenvolvimento local, continue usando apenas `docker-compose up -d` (sem `--profile full`) para subir só Postgres + MinIO, e rode backend/frontend via `npm run dev` como descrito acima — os serviços `backend`/`frontend` do compose só sobem quando o profile `full` é explicitamente selecionado.
+
+### Opção B — Cloud-ready (Vercel + Railway/Render)
+
+- **Frontend → Vercel**: aponte o projeto para `frontend/`, build command `npm run build`, output `dist/`, e defina `VITE_API_URL` apontando para o backend publicado.
+- **Backend → Railway/Render**: aponte para `backend/`, build command `npm run build`, start command `node dist/db/migrate.js && node dist/server.js` (ou rode a migration como job separado), e defina as variáveis de ambiente (`DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `S3_*`).
+- **Database → serviço gerenciado** (ex: Railway Postgres, Neon, RDS).
+- **S3 → AWS S3 ou Backblaze B2** no lugar do MinIO — basta apontar `S3_ENDPOINT`/`S3_ACCESS_KEY`/`S3_SECRET_KEY`/`S3_BUCKET` para o provedor escolhido; o backend usa `@aws-sdk/client-s3` com `forcePathStyle: true`, compatível com qualquer storage S3-compatible.
+
+Ver `SPEC-APOSTAS-INDEX.md` para o roadmap completo. O roadmap do MVP (Fases 1–5) está concluído; a Fase 6 (multitenant e monetização) é um trabalho futuro fora do escopo atual.
