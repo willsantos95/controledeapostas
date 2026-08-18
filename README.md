@@ -2,7 +2,7 @@
 
 Sistema pessoal de controle de apostas esportivas com calculadoras de surebet.
 
-Este repositório contém a **Fase 1 (Core & Auth)**, **Fase 2 (CRUD de Apostas & Upload de Screenshots)** e **Fase 3 (Calculadoras)** do roadmap: estrutura de monorepo, autenticação JWT completa, CRUD de apostas com upload de screenshots via MinIO/S3, calculadoras de Surebet/Duplo Green/Aposta Grátis com precisão decimal, e frontend com login/signup/dashboard/apostas/calculadoras.
+Este repositório contém a **Fase 1 (Core & Auth)**, **Fase 2 (CRUD de Apostas & Upload de Screenshots)**, **Fase 3 (Calculadoras)** e **Fase 4 (Analytics & Dashboard)** do roadmap: estrutura de monorepo, autenticação JWT completa, CRUD de apostas com upload de screenshots via MinIO/S3, calculadoras de Surebet/Duplo Green/Aposta Grátis com precisão decimal, dashboard com KPIs e gráficos, e frontend com login/signup/dashboard/apostas/calculadoras.
 
 ## Estrutura
 
@@ -54,7 +54,7 @@ cd backend
 npm test
 ```
 
-Os testes cobrem hashing de senha, validação de força de senha/email, geração/verificação de JWT, validação de payload das rotas de auth, apostas e calculadoras, o cálculo de `net_gain` com Decimal.js para os 4 cenários de resultado (won/lost/void/canceled), e as fórmulas das 3 calculadoras (surebet, duplo green, aposta grátis) — tudo sem exigir banco ou MinIO reais rodando. Testes de integração completos (com banco e S3) podem ser adicionados rodando `docker-compose up -d` antes de `npm test`.
+Os testes cobrem hashing de senha, validação de força de senha/email, geração/verificação de JWT, validação de payload das rotas de auth, apostas, calculadoras e analytics, o cálculo de `net_gain` com Decimal.js para os 4 cenários de resultado (won/lost/void/canceled), as fórmulas das 3 calculadoras (surebet, duplo green, aposta grátis), e as funções de métricas/breakdown/série acumulada do dashboard — tudo sem exigir banco ou MinIO reais rodando. Testes de integração completos (com banco e S3) podem ser adicionados rodando `docker-compose up -d` antes de `npm test`.
 
 ## Endpoints implementados
 
@@ -91,6 +91,15 @@ Os testes cobrem hashing de senha, validação de força de senha/email, geraç�
 
 Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pode ser convertido em aposta(s) real(is) via `POST /bets/from-calculator`, informando `calculator_type`, `calculator_data` (o resultado retornado pela calculadora) e, opcionalmente, `calculator_log_id` para marcar o log como salvo.
 
+### Fase 4 — Analytics
+
+| Método | Rota | Auth |
+|---|---|---|
+| GET | `/analytics/summary?period=&sport=` | sim |
+| GET | `/analytics/cumulative?period=` | sim |
+
+`period` aceita `today`, `week`, `month` (padrão) ou `all-time`. `summary` retorna métricas agregadas (ganho real, ROI%, win rate, melhor/pior aposta) e breakdown por esporte/plataforma/tipo de aposta, sempre baseado em apostas com resultado (`result_date` preenchido). `cumulative` retorna a série diária de ganho e saldo acumulado usada no gráfico do dashboard.
+
 ## Páginas do frontend
 
 - `/bets` — lista de apostas com filtros (status, esporte) e paginação
@@ -100,10 +109,10 @@ Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pod
 - `/calculators/surebet` — calculadora de surebet 2-way
 - `/calculators/duplo-green` — calculadora de duplo green 3-way
 - `/calculators/free-bet` — calculadora de aposta grátis (modo simples e com lay)
+- `/dashboard` — KPIs (ganho real, ROI%, win rate, total de apostas), seletor de período, filtro de esporte, gráfico de ganho acumulado, distribuição por esporte e por plataforma, e melhor/pior aposta do período
 
 ## Próximas fases
 
-- Fase 4: Analytics & Dashboard
 - Fase 5: Polish & Deploy
 
 Ver `SPEC-APOSTAS-INDEX.md` para o roadmap completo.
