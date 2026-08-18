@@ -5,6 +5,8 @@ dotenv.config();
 
 export const S3_BUCKET = process.env.S3_BUCKET || "apostas-bucket";
 
+export const isS3Configured = Boolean(process.env.S3_ENDPOINT);
+
 export const s3Client = new S3Client({
   endpoint: process.env.S3_ENDPOINT || "http://localhost:9000",
   region: process.env.S3_REGION || "us-east-1",
@@ -16,6 +18,11 @@ export const s3Client = new S3Client({
 });
 
 export async function ensureBucketExists() {
+  if (!isS3Configured) {
+    console.log("S3_ENDPOINT não configurado — upload de screenshots desabilitado.");
+    return;
+  }
+
   try {
     await s3Client.send(new HeadBucketCommand({ Bucket: S3_BUCKET }));
   } catch {

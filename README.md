@@ -38,6 +38,8 @@ npm run dev       # inicia em http://localhost:4000
 
 Edite `.env` e defina um `JWT_SECRET` forte antes de qualquer uso real. As variáveis `S3_*` já vêm configuradas para o MinIO local do `docker-compose.yml`.
 
+**S3/MinIO é opcional.** Ele só é usado pelo upload de prints/comprovação das apostas (`POST /bets/upload-screenshot`). Se `S3_ENDPOINT` não estiver definido, o backend sobe normalmente e todo o resto funciona (login, CRUD de apostas sem print, calculadoras, dashboard) — só a rota de upload retorna `503` com uma mensagem explicando que o storage não está configurado.
+
 ### 3. Frontend
 
 ```bash

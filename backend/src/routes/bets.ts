@@ -6,7 +6,7 @@ import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import Decimal from "decimal.js";
 import { pool } from "../db/pool";
 import { AppError } from "../middleware/errorHandler";
-import { s3Client, S3_BUCKET } from "../config/s3";
+import { s3Client, S3_BUCKET, isS3Configured } from "../config/s3";
 import { calculateBetResult, BetResultStatus } from "../utils/betResult";
 
 const router = Router();
@@ -32,6 +32,12 @@ router.post(
   "/upload-screenshot",
   upload.single("file"),
   async (req: Request, res: Response) => {
+    if (!isS3Configured) {
+      throw new AppError(
+        "Upload de screenshots não está configurado neste ambiente. Configure as variáveis S3_* para habilitar.",
+        503
+      );
+    }
     if (!req.file) {
       throw new AppError("Arquivo não enviado", 400);
     }
