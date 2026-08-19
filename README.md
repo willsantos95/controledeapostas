@@ -87,11 +87,14 @@ Os testes cobrem hashing de senha, validação de força de senha/email, geraç�
 
 | Método | Rota | Auth |
 |---|---|---|
-| POST | `/calculators/surebet` | sim |
-| POST | `/calculators/duplo-green` | sim |
+| POST | `/calculators/distribution` | sim |
 | POST | `/calculators/free-bet` | sim |
 
-Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pode ser convertido em aposta(s) real(is) via `POST /bets/from-calculator`, informando `calculator_type`, `calculator_data` (o resultado retornado pela calculadora) e, opcionalmente, `calculator_log_id` para marcar o log como salvo.
+`/calculators/distribution` é uma calculadora genérica de N pernas (`legs: [{ odds, isFreebet? }]` + `anchorStake`) que substitui as antigas calculadoras fixas de Surebet (2-way) e Duplo Green (3-way) — ambas são apenas casos particulares (2 ou 3 pernas) do mesmo cálculo. Cada perna pode ser marcada como `isFreebet` (custo zero, útil para combinar apostas grátis com hedges pagos). Retorna o stake/custo/lucro de cada perna, o total investido e o lucro mínimo garantido (ROI%).
+
+`/calculators/free-bet` no modo `with-lay` aceita `exchangeCommission` (%) e usa a fórmula padrão de matched betting (`layStake = freeBetValue * (oddBack - 1) / (oddLay - comissão)`), retornando também o saldo (`liability`) necessário na exchange para cobrir o lay.
+
+Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pode ser convertido em aposta(s) real(is) via `POST /bets/from-calculator`, informando `calculator_type` (`distribution` ou `free_bet_converter`), `calculator_data` (o resultado retornado pela calculadora) e, opcionalmente, `calculator_log_id` para marcar o log como salvo.
 
 ### Fase 4 — Analytics
 
@@ -108,9 +111,8 @@ Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pod
 - `/bets/new` — formulário de criação de aposta com upload de screenshots
 - `/bets/:id` — detalhe da aposta, com botão de editar (se pendente) e marcar resultado
 - `/bets/:id/edit` — edição de aposta pendente
-- `/calculators/surebet` — calculadora de surebet 2-way
-- `/calculators/duplo-green` — calculadora de duplo green 3-way
-- `/calculators/free-bet` — calculadora de aposta grátis (modo simples e com lay)
+- `/calculators/distribution` — calculadora genérica de distribuição de apostas (N pernas, cobre surebet, duplo green e combinações com freebet)
+- `/calculators/free-bet` — calculadora de aposta grátis (modo simples e com lay, com comissão de exchange)
 - `/dashboard` — KPIs (ganho real, ROI%, win rate, total de apostas), seletor de período, filtro de esporte, gráfico de ganho acumulado, distribuição por esporte e por plataforma, e melhor/pior aposta do período
 
 ## Segurança (Fase 5)

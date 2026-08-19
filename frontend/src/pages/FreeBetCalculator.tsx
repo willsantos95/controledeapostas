@@ -11,6 +11,7 @@ interface FormValues {
   odd: number;
   oddBack: number;
   oddLay: number;
+  exchangeCommission: number;
 }
 
 interface FreeBetResult {
@@ -20,6 +21,7 @@ interface FreeBetResult {
   gainIfLose: string;
   greenBox?: string;
   layStake?: string;
+  liability?: string;
   notes: string;
   error?: string;
 }
@@ -32,7 +34,7 @@ export function FreeBetCalculator() {
     handleSubmit,
     watch,
     formState: { isSubmitting },
-  } = useForm<FormValues>({ defaultValues: { type: "simple" } });
+  } = useForm<FormValues>({ defaultValues: { type: "simple", exchangeCommission: 0 } });
 
   const type = watch("type");
 
@@ -52,6 +54,7 @@ export function FreeBetCalculator() {
               freeBetValue: Number(values.freeBetValue),
               oddBack: Number(values.oddBack),
               oddLay: Number(values.oddLay),
+              exchangeCommission: Number(values.exchangeCommission || 0),
             };
 
       const { data } = await API.post("/calculators/free-bet", payload);
@@ -125,6 +128,17 @@ export function FreeBetCalculator() {
                   {...register("oddLay", { required: type === "with-lay", min: 1.01 })}
                 />
               </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Comissão da Exchange (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+                  {...register("exchangeCommission", { min: 0, max: 99.99 })}
+                />
+              </div>
             </div>
           )}
 
@@ -144,6 +158,9 @@ export function FreeBetCalculator() {
               <p>Ganho se vencer: R$ {Number(result.gainIfWin).toFixed(2)}</p>
               <p>Ganho/Perda se perder: R$ {Number(result.gainIfLose).toFixed(2)}</p>
               {result.layStake && <p>Stake de lay: R$ {Number(result.layStake).toFixed(2)}</p>}
+              {result.liability && (
+                <p>Saldo necessário na exchange: R$ {Number(result.liability).toFixed(2)}</p>
+              )}
               {result.greenBox && (
                 <p className="font-semibold text-green-700">
                   Green box (garantido): R$ {Number(result.greenBox).toFixed(2)}

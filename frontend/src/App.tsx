@@ -8,8 +8,7 @@ import { BetsList } from "./pages/BetsList";
 import { BetForm } from "./pages/BetForm";
 import { BetDetail } from "./pages/BetDetail";
 import { BetEdit } from "./pages/BetEdit";
-import { SurebetCalculator } from "./pages/SurebetCalculator";
-import { DuploGreenCalculator } from "./pages/DuploGreenCalculator";
+import { DistributionCalculator } from "./pages/DistributionCalculator";
 import { FreeBetCalculator } from "./pages/FreeBetCalculator";
 
 export default function App() {
@@ -61,18 +60,10 @@ export default function App() {
             }
           />
           <Route
-            path="/calculators/surebet"
+            path="/calculators/distribution"
             element={
               <ProtectedRoute>
-                <SurebetCalculator />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/calculators/duplo-green"
-            element={
-              <ProtectedRoute>
-                <DuploGreenCalculator />
+                <DistributionCalculator />
               </ProtectedRoute>
             }
           />

@@ -374,70 +374,25 @@ router.post("/from-calculator", async (req: Request, res: Response) => {
   const betIdPrefix = `CALC-${Date.now()}`;
   let createdBets;
 
-  if (calculator_type === "surebet_2way") {
-    const { stake1, stake2 } = calculator_data;
-    if (!stake1 || !stake2) {
-      throw new AppError("calculator_data inválido para surebet_2way", 400);
+  if (calculator_type === "distribution") {
+    const { legs } = calculator_data;
+    if (!Array.isArray(legs) || legs.length < 2) {
+      throw new AppError("calculator_data inválido para distribution", 400);
     }
-    createdBets = await Promise.all([
-      insertBet(userId, {
-        bet_id: `${betIdPrefix}-1`,
-        platform,
-        stake: String(stake1),
-        initial_odds: String(calculator_data.odd1 ?? calculator_data.stake1),
-        bet_type: "single",
-        event_description,
-        bet_description: "Perna 1 - Surebet",
-        notes,
-      }),
-      insertBet(userId, {
-        bet_id: `${betIdPrefix}-2`,
-        platform,
-        stake: String(stake2),
-        initial_odds: String(calculator_data.odd2 ?? calculator_data.stake2),
-        bet_type: "single",
-        event_description,
-        bet_description: "Perna 2 - Surebet",
-        notes,
-      }),
-    ]);
-  } else if (calculator_type === "duplo_green_3way") {
-    const { stake1, stakeX, stake2 } = calculator_data;
-    if (!stake1 || !stakeX || !stake2) {
-      throw new AppError("calculator_data inválido para duplo_green_3way", 400);
-    }
-    createdBets = await Promise.all([
-      insertBet(userId, {
-        bet_id: `${betIdPrefix}-1`,
-        platform,
-        stake: String(stake1),
-        initial_odds: "1",
-        bet_type: "single",
-        event_description,
-        bet_description: "Casa - Duplo Green",
-        notes,
-      }),
-      insertBet(userId, {
-        bet_id: `${betIdPrefix}-X`,
-        platform,
-        stake: String(stakeX),
-        initial_odds: "1",
-        bet_type: "single",
-        event_description,
-        bet_description: "Empate - Duplo Green",
-        notes,
-      }),
-      insertBet(userId, {
-        bet_id: `${betIdPrefix}-2`,
-        platform,
-        stake: String(stake2),
-        initial_odds: "1",
-        bet_type: "single",
-        event_description,
-        bet_description: "Fora - Duplo Green",
-        notes,
-      }),
-    ]);
+    createdBets = await Promise.all(
+      legs.map((leg: { odds: string; stake: string; isFreebet?: boolean }, i: number) =>
+        insertBet(userId, {
+          bet_id: `${betIdPrefix}-${i + 1}`,
+          platform,
+          stake: String(leg.stake),
+          initial_odds: String(leg.odds),
+          bet_type: leg.isFreebet ? "free" : "single",
+          event_description,
+          bet_description: `Perna ${i + 1} - Distribuição`,
+          notes,
+        })
+      )
+    );
   } else if (calculator_type === "free_bet_converter") {
     const { recommendedStake } = calculator_data;
     if (!recommendedStake) {

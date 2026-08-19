@@ -1,15 +1,14 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db/pool";
 import { AppError } from "../middleware/errorHandler";
-import { calculateSurebet } from "../calculators/surebet";
-import { calculateDuploGreen } from "../calculators/duploGreen";
+import { calculateDistribution, DistributionInput } from "../calculators/distribution";
 import { calculateFreeBet, FreeBetInput } from "../calculators/freeBet";
 
 const router = Router();
 
 async function logCalculation(
   userId: string,
-  calculatorType: "surebet_2way" | "duplo_green_3way" | "free_bet_converter",
+  calculatorType: "distribution" | "free_bet_converter",
   inputData: unknown,
   outputData: unknown
 ) {
@@ -20,38 +19,19 @@ async function logCalculation(
   );
 }
 
-router.post("/surebet", async (req: Request, res: Response) => {
-  const { odd1, odd2, stake1 } = req.body ?? {};
+router.post("/distribution", async (req: Request, res: Response) => {
+  const { legs, anchorStake, anchorIndex } = req.body ?? {};
 
-  if (odd1 === undefined || odd2 === undefined || stake1 === undefined) {
-    throw new AppError("odd1, odd2 e stake1 são obrigatórios", 400);
+  if (!Array.isArray(legs) || legs.length < 2) {
+    throw new AppError("legs deve ser um array com pelo menos 2 pernas", 400);
+  }
+  if (anchorStake === undefined) {
+    throw new AppError("anchorStake é obrigatório", 400);
   }
 
-  const result = calculateSurebet({ odd1, odd2, stake1 });
-  await logCalculation(req.user!.id, "surebet_2way", { odd1, odd2, stake1 }, result);
-
-  res.json(result);
-});
-
-router.post("/duplo-green", async (req: Request, res: Response) => {
-  const { odd1, oddX, odd2, stakeInitial } = req.body ?? {};
-
-  if (
-    odd1 === undefined ||
-    oddX === undefined ||
-    odd2 === undefined ||
-    stakeInitial === undefined
-  ) {
-    throw new AppError("odd1, oddX, odd2 e stakeInitial são obrigatórios", 400);
-  }
-
-  const result = calculateDuploGreen({ odd1, oddX, odd2, stakeInitial });
-  await logCalculation(
-    req.user!.id,
-    "duplo_green_3way",
-    { odd1, oddX, odd2, stakeInitial },
-    result
-  );
+  const input: DistributionInput = { legs, anchorStake, anchorIndex };
+  const result = calculateDistribution(input);
+  await logCalculation(req.user!.id, "distribution", input, result);
 
   res.json(result);
 });

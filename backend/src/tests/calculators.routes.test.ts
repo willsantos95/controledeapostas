@@ -9,13 +9,8 @@ beforeAll(() => {
 const app = createApp();
 
 describe("calculators routes validation (no DB required)", () => {
-  it("rejects unauthenticated surebet calculation", async () => {
-    const res = await request(app).post("/calculators/surebet").send({});
-    expect(res.status).toBe(401);
-  });
-
-  it("rejects unauthenticated duplo-green calculation", async () => {
-    const res = await request(app).post("/calculators/duplo-green").send({});
+  it("rejects unauthenticated distribution calculation", async () => {
+    const res = await request(app).post("/calculators/distribution").send({});
     expect(res.status).toBe(401);
   });
 

@@ -79,16 +79,10 @@ export function DashboardPage() {
               Ver minhas apostas
             </Link>
             <Link
-              to="/calculators/surebet"
+              to="/calculators/distribution"
               className="inline-block rounded bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300"
             >
-              Calculadora Surebet
-            </Link>
-            <Link
-              to="/calculators/duplo-green"
-              className="inline-block rounded bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300"
-            >
-              Calculadora Duplo Green
+              Distribuição de Apostas
             </Link>
             <Link
               to="/calculators/free-bet"
