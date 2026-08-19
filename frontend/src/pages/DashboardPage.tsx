@@ -90,6 +90,12 @@ export function DashboardPage() {
             >
               Calculadora Aposta Grátis
             </Link>
+            <Link
+              to="/calculators/odds-table"
+              className="inline-block rounded bg-gray-200 px-4 py-2 text-sm text-gray-800 hover:bg-gray-300"
+            >
+              Tabela de Odds
+            </Link>
           </div>
         </div>
 

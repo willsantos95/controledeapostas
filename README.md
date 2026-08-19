@@ -113,6 +113,7 @@ Todo cálculo é registrado em `calculator_logs` para auditoria. Um cálculo pod
 - `/bets/:id/edit` — edição de aposta pendente
 - `/calculators/distribution` — calculadora genérica de distribuição de apostas (N pernas, cobre surebet, duplo green e combinações com freebet)
 - `/calculators/free-bet` — calculadora de aposta grátis (modo simples e com lay, com comissão de exchange)
+- `/calculators/odds-table` — tabela Odd 1 × Odd 2 com o ROI% de surebet calculado para cada combinação (verde = surebet válida), 100% client-side para visualização rápida de faixas de odds
 - `/dashboard` — KPIs (ganho real, ROI%, win rate, total de apostas), seletor de período, filtro de esporte, gráfico de ganho acumulado, distribuição por esporte e por plataforma, e melhor/pior aposta do período
 
 ## Segurança (Fase 5)

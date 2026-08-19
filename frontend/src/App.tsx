@@ -10,6 +10,7 @@ import { BetDetail } from "./pages/BetDetail";
 import { BetEdit } from "./pages/BetEdit";
 import { DistributionCalculator } from "./pages/DistributionCalculator";
 import { FreeBetCalculator } from "./pages/FreeBetCalculator";
+import { OddsTable } from "./pages/OddsTable";
 
 export default function App() {
   return (
@@ -72,6 +73,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <FreeBetCalculator />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calculators/odds-table"
+            element={
+              <ProtectedRoute>
+                <OddsTable />
               </ProtectedRoute>
             }
           />
